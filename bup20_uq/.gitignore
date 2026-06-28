@@ -7,7 +7,6 @@ venv/
 .env/
 
 # Data (VERY IMPORTANT for HPC projects)
-data/
 output/
 logs/
 
@@ -17,7 +16,4 @@ logs/
 # OS files
 .DS_Store
 
-# Large images (optional, but recommended if not needed)
-*.png
-*.jpg
-*.jpeg
+
