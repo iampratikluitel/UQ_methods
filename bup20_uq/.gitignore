@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.pyc
+
+# Virtual environment
+venv/
+.env/
+
+# Data (VERY IMPORTANT for HPC projects)
+data/
+output/
+logs/
+
+# Jupyter / cache
+.ipynb_checkpoints/
+
+# OS files
+.DS_Store
+
+# Large images (optional, but recommended if not needed)
+*.png
+*.jpg
+*.jpeg
