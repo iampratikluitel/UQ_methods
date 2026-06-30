@@ -8,9 +8,9 @@ import sys, os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import register_dataset  # noqa: F401
-import torch
 import numpy as np
 import json
+from pathlib import Path
 from tqdm import tqdm
 
 from detectron2.config import get_cfg
@@ -18,7 +18,8 @@ from detectron2 import model_zoo
 from detectron2.engine import DefaultPredictor
 from detectron2.data import DatasetCatalog, MetadataCatalog
 from detectron2.structures import BoxMode
-import pycocotools.mask as mask_utils
+
+from config import DEFAULT_SCORE_THRESH, DEFAULT_WEIGHTS, OUTPUT_DIR, resolve_image_path
 
 
 def build_predictor(weights_path, score_thresh=0.3):
@@ -108,7 +109,8 @@ def extract_all_instance_data(dataset_name, weights_path, score_thresh=0.3,
 
     for sample in tqdm(dataset, desc="Extracting instance data"):
         import cv2
-        image = cv2.imread(sample["file_name"])
+        image_path = resolve_image_path(sample["file_name"])
+        image = cv2.imread(image_path)
         if image is None:
             continue
 
@@ -142,7 +144,7 @@ def extract_all_instance_data(dataset_name, weights_path, score_thresh=0.3,
 
         for m in matched:
             m["image_id"] = sample["image_id"]
-            m["file_name"] = sample["file_name"]
+            m["file_name"] = image_path
             m["img_width"] = img_w
             m["img_height"] = img_h
             m["norm_x"] = m["centroid_x"] / img_w   # 0=left, 1=right
@@ -161,9 +163,9 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument("--dataset", default="pepper_eval")
-    parser.add_argument("--weights", default="/home/s29pluit/projects/bup20_uq/output/model_final.pth")
-    parser.add_argument("--thresh", type=float, default=0.3)
-    parser.add_argument("--output", default="/home/s29pluit/projects/bup20_uq/output/instance_calibration_data.json")
+    parser.add_argument("--weights", default=str(DEFAULT_WEIGHTS))
+    parser.add_argument("--thresh", type=float, default=DEFAULT_SCORE_THRESH)
+    parser.add_argument("--output", default=str(OUTPUT_DIR / "instance_calibration_data.json"))
     args = parser.parse_args()
 
     extract_all_instance_data(args.dataset, args.weights, args.thresh, args.output)

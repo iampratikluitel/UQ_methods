@@ -19,6 +19,8 @@ from detectron2.data import DatasetCatalog, build_detection_test_loader
 from detectron2.evaluation import COCOEvaluator, inference_on_dataset
 from detectron2.modeling import build_model
 
+from config import DEFAULT_WEIGHTS, OUTPUT_DIR
+
 
 # ── Config ────────────────────────────────────────────────────────────────────
 
@@ -30,9 +32,9 @@ def build_cfg(score_thresh=0.0):
         )
     )
     cfg.MODEL.ROI_HEADS.NUM_CLASSES = 5
-    cfg.MODEL.WEIGHTS = "/home/s29pluit/projects/bup20_uq/output/model_final.pth"
+    cfg.MODEL.WEIGHTS = str(DEFAULT_WEIGHTS)
     cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = score_thresh
-    cfg.OUTPUT_DIR = "/home/s29pluit/projects/bup20_uq/output/mc_dropout"
+    cfg.OUTPUT_DIR = str(OUTPUT_DIR / "mc_dropout")
     os.makedirs(cfg.OUTPUT_DIR, exist_ok=True)
     return cfg
 
