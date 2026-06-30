@@ -37,7 +37,7 @@ python uq_methods/run_uq_benchmark.py --quick
 | Per-class ECE (calibration matrix) | ✅ Done | `calibration_metrics.py` | `calibration_matrix.png` |
 | Quantitative ECE/ACE in report | ✅ Done | `run_calibration_analysis.py` | |
 
-**Gap:** TTA and MC Dropout do not yet produce *per-instance* calibration — only image-level `std_score`.
+**Gap:** Image-level `tta.py` / `mc_dropout.py` scripts remain for quick summaries; calibration uses `extract_instance_uq.py`.
 
 ---
 
@@ -46,8 +46,9 @@ python uq_methods/run_uq_benchmark.py --quick
 | Task | Status | Module | Notes |
 |------|--------|--------|-------|
 | Baseline uncertainty (1 − confidence) | ✅ Done | `extract_instance_confidence.py` | Per instance |
-| TTA uncertainty | ⚠️ Partial | `tta.py` | Image-level only; needs per-instance clustering |
-| MC Dropout uncertainty | ⚠️ Partial | `mc_dropout.py` | Image-level only; needs per-instance clustering |
+| TTA instance calibration (per-detection) | ✅ Done | `extract_instance_uq.py` | Spatial-preserving augs only |
+| MC Dropout instance calibration | ✅ Done | `extract_instance_uq.py` | Cluster across T passes by IoU |
+| ECE/ACE/confidence gap for TTA & MC | ✅ Done | `run_uq_benchmark.py` | Same pipeline as baseline |
 | Ensemble uncertainty | ❌ Todo | — | Stub in master script |
 | Class uncertainty ranking | ✅ Done | `plotting.py` | Histogram / bar chart |
 | Spatial uncertainty map | ✅ Done | `plotting.py` | norm_x / norm_y scatter |
@@ -102,7 +103,7 @@ python uq_methods/run_uq_benchmark.py --quick
 
 1. Run `python uq_methods/run_uq_benchmark.py --quick` to validate report pipeline.
 2. On cluster: `python uq_methods/run_uq_benchmark.py --methods baseline tta mc_dropout`.
-3. Upgrade TTA/MC to **per-instance** uncertainty (cluster detections across passes by IoU).
+3. Upgrade TTA/MC to **per-instance** uncertainty (cluster detections across passes by IoU). ✅ Done — see `extract_instance_uq.py`
 4. Add **AP + mIoU** under rotation in `distribution_shift_evaluation.py`.
 5. Add **OOD AUROC** using high-shift images as OOD.
 6. Implement **ensemble** from saved checkpoints.

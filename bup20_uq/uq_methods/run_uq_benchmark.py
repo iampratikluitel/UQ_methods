@@ -36,6 +36,7 @@ from config import (
 )
 from distribution_shift_evaluation import run_distribution_shift
 from extract_instance_confidence import extract_all_instance_data
+from extract_instance_uq import extract_mc_dropout_instance_data, extract_tta_instance_data
 from report import generate_comparison_report
 from run_calibration_analysis import run_calibration_analysis
 
@@ -62,21 +63,33 @@ def run_baseline(dataset: str, weights: Path, report_dir: Path, score_thresh: fl
     return run_calibration_analysis(data_path, report_dir, method_name="baseline")
 
 
-def run_tta(dataset: str, score_thresh: float) -> list:
-    from tta import run_tta_evaluation
-    results, _ = run_tta_evaluation(dataset_name=dataset, score_thresh=score_thresh)
-    return results
-
-
-def run_mc_dropout(dataset: str, T: int, dropout: float, score_thresh: float) -> list:
-    from mc_dropout import run_mc_dropout_evaluation
-    results, _ = run_mc_dropout_evaluation(
+def run_tta(dataset: str, weights: Path, report_dir: Path, score_thresh: float) -> dict:
+    data_path = report_dir / "tta" / "instance_calibration_data.json"
+    data_path.parent.mkdir(parents=True, exist_ok=True)
+    extract_tta_instance_data(
         dataset_name=dataset,
+        weights_path=str(weights),
+        score_thresh=score_thresh,
+        output_path=str(data_path),
+    )
+    return run_calibration_analysis(data_path, report_dir, method_name="tta")
+
+
+def run_mc_dropout(
+    dataset: str, weights: Path, report_dir: Path,
+    T: int, dropout: float, score_thresh: float,
+) -> dict:
+    data_path = report_dir / "mc_dropout" / "instance_calibration_data.json"
+    data_path.parent.mkdir(parents=True, exist_ok=True)
+    extract_mc_dropout_instance_data(
+        dataset_name=dataset,
+        weights_path=str(weights),
+        score_thresh=score_thresh,
         T=T,
         dropout_rate=dropout,
-        score_thresh=score_thresh,
+        output_path=str(data_path),
     )
-    return results
+    return run_calibration_analysis(data_path, report_dir, method_name="mc_dropout")
 
 
 def run_ensemble(_dataset: str) -> None:
@@ -172,40 +185,14 @@ def main():
                     args.dataset, weights, report_dir, args.thresh, args.reuse_data
                 )
             elif method == "tta":
-                run_tta(args.dataset, args.thresh)
-                # TTA is image-level; copy summary into report metrics placeholder
-                tta_path = OUTPUT_DIR / "tta" / "tta_uncertainty_results.json"
-                if tta_path.exists():
-                    with open(tta_path) as f:
-                        tta_data = json.load(f)
-                    mean_unc = sum(d["std_score"] for d in tta_data) / len(tta_data)
-                    calibration_metrics["tta"] = {
-                        "method": "tta",
-                        "n_instances": len(tta_data),
-                        "ece": None,
-                        "ace": None,
-                        "mean_confidence": sum(d["mean_score"] for d in tta_data) / len(tta_data),
-                        "accuracy": None,
-                        "confidence_gap": None,
-                        "note": f"image-level std_score mean={mean_unc:.4f}",
-                    }
+                calibration_metrics["tta"] = run_tta(
+                    args.dataset, weights, report_dir, args.thresh
+                )
             elif method == "mc_dropout":
-                run_mc_dropout(args.dataset, args.T, args.dropout, args.thresh)
-                mc_path = OUTPUT_DIR / "mc_dropout" / "mc_dropout_uncertainty_results.json"
-                if mc_path.exists():
-                    with open(mc_path) as f:
-                        mc_data = json.load(f)
-                    mean_unc = sum(d["std_score"] for d in mc_data) / len(mc_data)
-                    calibration_metrics["mc_dropout"] = {
-                        "method": "mc_dropout",
-                        "n_instances": len(mc_data),
-                        "ece": None,
-                        "ace": None,
-                        "mean_confidence": sum(d["mean_score"] for d in mc_data) / len(mc_data),
-                        "accuracy": None,
-                        "confidence_gap": None,
-                        "note": f"image-level std_score mean={mean_unc:.4f}",
-                    }
+                calibration_metrics["mc_dropout"] = run_mc_dropout(
+                    args.dataset, weights, report_dir,
+                    args.T, args.dropout, args.thresh,
+                )
             elif method == "ensemble":
                 run_ensemble(args.dataset)
         except NotImplementedError as e:
@@ -228,15 +215,10 @@ def main():
         except Exception as e:
             print(f"  Qualitative skipped: {e}")
 
-    # Filter calibration_metrics for report table (only those with ECE)
-    report_calibration = {
-        k: v for k, v in calibration_metrics.items()
-        if v.get("ece") is not None
-    }
     generate_comparison_report(
         report_dir=report_dir,
-        methods_run=[m for m in methods if m in calibration_metrics or m in ("tta", "mc_dropout")],
-        calibration_metrics=report_calibration or calibration_metrics,
+        methods_run=methods,
+        calibration_metrics=calibration_metrics,
         shift_results=shift_results,
     )
 

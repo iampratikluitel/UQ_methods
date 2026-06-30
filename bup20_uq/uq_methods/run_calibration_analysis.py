@@ -72,11 +72,15 @@ def run_calibration_analysis(
         data,
         save_path=str(prefix / "uncertainty_by_class.png"),
         title=f"{method_name} — Class Uncertainty Ranking",
+        uncertainty_key="uncertainty" if data and "uncertainty" in data[0] else "score",
+        invert=method_name == "baseline",
     )
     plot_spatial_uncertainty(
         data,
         save_path=str(prefix / "spatial_uncertainty.png"),
         title=f"{method_name} — Spatial Uncertainty",
+        uncertainty_key="uncertainty" if data and "uncertainty" in data[0] else "score",
+        invert=method_name == "baseline",
     )
 
     metrics["class_uncertainty_ranking"] = ranked
