@@ -1,0 +1,38 @@
+# bup20_uq — Mask R-CNN training & uncertainty quantification (BUP20 sweet pepper)
+#
+# Python 3.10 recommended (matches Bender HPC module in scripts/train.slurm).
+#
+# ── Install order ─────────────────────────────────────────────────────────────
+# 1) PyTorch + torchvision (pick the wheel for your CUDA version)
+# 2) Detectron2 (wheel must match your torch + CUDA)
+# 3) pip install -r requirements.txt
+#
+# Example for CUDA 11.8 + PyTorch 2.1 (Bender A100):
+#   pip install torch==2.1.2 torchvision==0.16.2 --index-url https://download.pytorch.org/whl/cu118
+#   pip install detectron2 -f https://dl.fbaipublicfiles.com/detectron2/wheels/cu118/torch2.1/index.html
+#   pip install -r requirements.txt
+#
+# Detectron2 install docs: https://detectron2.readthedocs.io/en/latest/tutorials/install.html
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Core numerics & IO
+numpy>=1.23,<2.0
+opencv-python>=4.8.0
+Pillow>=9.5.0
+PyYAML>=6.0
+tqdm>=4.65.0
+
+# Plotting & experiment logging
+matplotlib>=3.7.0
+tensorboard>=2.13.0
+
+# COCO annotations / evaluation (used by Detectron2 COCOEvaluator)
+pycocotools>=2.0.7
+
+# PyTorch stack — install separately FIRST (see comments above).
+# Uncomment and adjust versions if you want a single-file install on a known GPU node:
+# torch==2.1.2
+# torchvision==0.16.2
+
+# Detectron2 — install separately FIRST (see comments above).
+# detectron2

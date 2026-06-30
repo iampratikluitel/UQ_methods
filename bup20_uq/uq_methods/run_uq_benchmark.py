@@ -145,6 +145,12 @@ def main():
     parser.add_argument("--dropout", type=float, default=0.3)
     parser.add_argument("--skip-shift", action="store_true")
     parser.add_argument("--skip-qualitative", action="store_true")
+    parser.add_argument("--method-comparison", action="store_true",
+                        help="Save GT vs baseline/TTA/MC + per-TTA-transform panels")
+    parser.add_argument("--comparison-n", type=int, default=5,
+                        help="Number of random images for method comparison")
+    parser.add_argument("--comparison-image-id", type=int, nargs="*", default=None,
+                        help="Specific image IDs for method comparison")
     parser.add_argument("--reuse-data", action="store_true",
                         help="Reuse existing instance_calibration_data.json for baseline")
     parser.add_argument("--quick", action="store_true",
@@ -214,6 +220,22 @@ def main():
             save_qualitative_samples(args.dataset, weights, report_dir, n=5)
         except Exception as e:
             print(f"  Qualitative skipped: {e}")
+
+    if args.method_comparison:
+        print("\n>>> Method comparison (baseline / TTA / MC Dropout + TTA transforms)")
+        try:
+            from visualize_method_comparison import run_method_comparison
+            run_method_comparison(
+                dataset_name=args.dataset,
+                weights_path=weights,
+                score_thresh=args.thresh,
+                dropout_rate=args.dropout,
+                n_samples=args.comparison_n,
+                image_ids=args.comparison_image_id,
+            )
+        except Exception as e:
+            print(f"  Method comparison skipped: {e}")
+            raise
 
     generate_comparison_report(
         report_dir=report_dir,
